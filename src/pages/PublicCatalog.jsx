@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/axios";
 import jsPDF from "jspdf";
+import { useCatalogColors } from "../store/useCatalogColors";
 
 export default function PublicCatalog() {
   const { id } = useParams();
@@ -11,16 +12,12 @@ export default function PublicCatalog() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [companyName, setCompanyName] = useState("");
   const [useQuantities, setUseQuantities] = useState(false);
-  const [color, setColor] = useState("#3b82f6"); // default azul
+
+  // 🔹 usamos zustand para obtener el color dinámico
+  const { colors } = useCatalogColors();
+  const color = colors[id] || "#3b82f6"; // fallback azul
 
   useEffect(() => {
-    // Leer color desde localStorage
-    const savedColors =
-      JSON.parse(localStorage.getItem("catalog-colors")) || {};
-    if (savedColors[id]) {
-      setColor(savedColors[id]);
-    }
-
     const fetchCatalog = async () => {
       setLoading(true);
       try {
@@ -123,12 +120,15 @@ export default function PublicCatalog() {
     <div
       className="min-h-screen py-10"
       style={{
-        backgroundColor: `${color}22`, // fondo general sutil
+        background: `linear-gradient(135deg, ${color}15, white 70%)`,
       }}
     >
       <div className="max-w-6xl mx-auto px-6">
         {/* Título */}
-        <h1 className="text-4xl font-extrabold mb-12 tracking-tight text-center">
+        <h1
+          className="text-4xl font-extrabold mb-12 tracking-tight text-center"
+          style={{ color }}
+        >
           {catalog.name}
         </h1>
 
@@ -143,12 +143,12 @@ export default function PublicCatalog() {
                 <div
                   key={srv.id}
                   onClick={() => handleToggleService(srv)}
-                  className={`cursor-pointer rounded-xl p-6 border transition-all duration-300 ease-in-out transform ${
-                    isSelected ? "shadow-md scale-[1.01]" : "shadow-sm"
+                  className={`cursor-pointer rounded-xl p-6 border transition-all duration-300 ease-in-out transform hover:shadow-md ${
+                    isSelected ? "scale-[1.01]" : ""
                   }`}
                   style={{
                     borderColor: isSelected ? color : "#e5e7eb",
-                    backgroundColor: isSelected ? `${color}15` : "white",
+                    backgroundColor: isSelected ? `${color}12` : "white",
                   }}
                 >
                   <div className="flex justify-between items-start">
@@ -174,7 +174,7 @@ export default function PublicCatalog() {
                         >
                           <button
                             onClick={() => handleQuantityChange(srv.id, -1)}
-                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition-all duration-200 shadow-sm"
+                            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 shadow-sm"
                             style={{
                               backgroundColor: `${color}22`,
                               color: color,
@@ -182,12 +182,12 @@ export default function PublicCatalog() {
                           >
                             −
                           </button>
-                          <span className="font-semibold text-gray-700 text-base sm:text-lg min-w-[24px] text-center">
+                          <span className="font-semibold text-gray-700 text-base min-w-[24px] text-center">
                             {current?.quantity}
                           </span>
                           <button
                             onClick={() => handleQuantityChange(srv.id, +1)}
-                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition-all duration-200 shadow-sm"
+                            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 shadow-sm"
                             style={{
                               backgroundColor: `${color}22`,
                               color: color,
@@ -206,7 +206,9 @@ export default function PublicCatalog() {
 
           {/* Sidebar resumen */}
           <div className="bg-white p-6 rounded-xl shadow-lg h-fit sticky top-6 border">
-            <h2 className="text-2xl font-bold mb-6">Resumen de selección</h2>
+            <h2 className="text-2xl font-bold mb-6" style={{ color }}>
+              Resumen de selección
+            </h2>
 
             {/* Activar cantidades */}
             <div className="flex items-center mb-6">
