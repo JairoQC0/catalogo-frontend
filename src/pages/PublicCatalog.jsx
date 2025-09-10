@@ -12,8 +12,9 @@ export default function PublicCatalog() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [companyName, setCompanyName] = useState("");
   const [useQuantities, setUseQuantities] = useState(false);
+  const [showToast, setShowToast] = useState(false); // 🔔 toast visual
 
-  // 🔹 usamos zustand para obtener el color dinámico
+  // 🔹 color dinámico desde zustand
   const { colors } = useCatalogColors();
   const color = colors[id] || "#3b82f6"; // fallback azul
 
@@ -110,6 +111,10 @@ export default function PublicCatalog() {
     filename += ".pdf";
 
     doc.save(filename);
+
+    // 🔔 Mostrar toast
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   if (loading) return <p className="p-4">Cargando catálogo...</p>;
@@ -118,11 +123,18 @@ export default function PublicCatalog() {
 
   return (
     <div
-      className="min-h-screen py-10"
+      className="min-h-screen py-10 relative"
       style={{
         background: `linear-gradient(135deg, ${color}15, white 70%)`,
       }}
     >
+      {/* 🔔 Toast flotante */}
+      {showToast && (
+        <div className="fixed top-6 right-6 bg-emerald-500 text-white px-5 py-3 rounded-xl shadow-lg animate-fade-in-down">
+          ✅ Reporte generado, revisa Descargas
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto px-6">
         {/* Título */}
         <h1
@@ -143,7 +155,7 @@ export default function PublicCatalog() {
                 <div
                   key={srv.id}
                   onClick={() => handleToggleService(srv)}
-                  className={`cursor-pointer rounded-xl p-6 border transition-all duration-300 ease-in-out transform hover:shadow-md ${
+                  className={`cursor-pointer rounded-xl p-6 border transition-all duration-300 ease-in-out transform hover:shadow-lg hover:-translate-y-1 ${
                     isSelected ? "scale-[1.01]" : ""
                   }`}
                   style={{
@@ -275,7 +287,7 @@ export default function PublicCatalog() {
             {selectedServices.length > 0 && (
               <button
                 onClick={handleGeneratePDF}
-                className="w-full py-3 rounded-lg font-semibold shadow-md transition-all duration-300 ease-in-out"
+                className="w-full py-3 rounded-lg font-semibold shadow-md transition-all duration-300 ease-in-out hover:scale-[1.02]"
                 style={{
                   backgroundColor: color,
                   color: "#fff",
