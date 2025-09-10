@@ -37,7 +37,7 @@ export default function Catalogs() {
   };
 
   return (
-    <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-6 min-h-screen bg-gradient-to-r from-indigo-50 via-white to-cyan-50">
       <h2 className="text-2xl md:text-3xl font-extrabold text-gray-800 mb-6">
         Catálogos
       </h2>
