@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import api from "../api/axios";
 import {
   COLORS,
@@ -14,25 +14,10 @@ export default function Catalogs() {
   const [loading, setLoading] = useState(true);
 
   const { colors, setColor } = useCatalogColors();
-  const pickerRef = useRef(null);
 
   useEffect(() => {
     fetchCatalogs();
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        pickerRef.current &&
-        !pickerRef.current.contains(event.target) &&
-        openColorPicker !== null
-      ) {
-        setOpenColorPicker(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [openColorPicker]);
 
   const fetchCatalogs = async () => {
     try {
@@ -69,15 +54,10 @@ export default function Catalogs() {
               <div
                 key={cat.id}
                 className="relative p-4 md:p-5 rounded-2xl shadow-sm hover:shadow-md transition duration-200 flex flex-col justify-between bg-white border"
+                style={{ backgroundColor: bg }}
               >
-                {/* Franja de color superior */}
-                <div
-                  className="absolute top-0 left-0 w-full h-2 rounded-t-2xl"
-                  style={{ backgroundColor: bg }}
-                />
-
                 {editing === cat.id ? (
-                  <div className="space-y-3 mt-2">
+                  <div className="space-y-3">
                     <input
                       className="w-full border rounded-xl p-2 text-black"
                       value={newName}
@@ -101,8 +81,11 @@ export default function Catalogs() {
                   </div>
                 ) : (
                   <div className="flex flex-col h-full justify-between gap-3">
-                    {/* Título */}
-                    <span className="text-lg font-semibold truncate mt-2">
+                    {/* Título con contraste */}
+                    <span
+                      className="text-lg font-semibold truncate mt-2"
+                      style={{ color: textColor }}
+                    >
                       {cat.name}
                     </span>
 
@@ -113,7 +96,7 @@ export default function Catalogs() {
                           setEditing(cat.id);
                           setNewName(cat.name);
                         }}
-                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-xl text-sm"
+                        className="flex-1 bg-black/30 text-white px-3 py-1 rounded-xl text-sm"
                       >
                         Editar
                       </button>
@@ -121,7 +104,7 @@ export default function Catalogs() {
                         onClick={() =>
                           window.open(`/catalogs/${cat.id}`, "_blank")
                         }
-                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-xl text-sm"
+                        className="flex-1 bg-black/30 text-white px-3 py-1 rounded-xl text-sm"
                       >
                         Ver público
                       </button>
@@ -131,31 +114,27 @@ export default function Catalogs() {
                             openColorPicker === cat.id ? null : cat.id
                           )
                         }
-                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-xl text-sm flex items-center justify-center gap-1"
+                        className="flex-1 bg-black/30 text-white px-3 py-1 rounded-xl text-sm flex items-center justify-center gap-1"
                       >
                         🎨
                         <span
                           className="inline-block w-4 h-4 rounded-full border"
-                          style={{ backgroundColor: bg }}
+                          style={{
+                            backgroundColor: colors[cat.id] || "#ffffff",
+                          }}
                         />
                       </button>
                     </div>
 
-                    {/* Paleta flotante */}
+                    {/* Paleta */}
                     {openColorPicker === cat.id && (
-                      <div
-                        ref={pickerRef}
-                        className="absolute z-50 top-full mt-2 left-1/2 -translate-x-1/2 bg-white shadow-lg rounded-xl p-3 border flex flex-wrap gap-2"
-                      >
+                      <div className="flex flex-wrap gap-2 mt-3">
                         {/* sin color */}
                         <button
-                          onClick={() => {
-                            setColor(cat.id, "#ffffff");
-                            setOpenColorPicker(null);
-                          }}
-                          className={`w-8 h-8 rounded-full border flex items-center justify-center hover:scale-110 transition ${
+                          onClick={() => setColor(cat.id, "#ffffff")}
+                          className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
                             (!colors[cat.id] || colors[cat.id] === "#ffffff") &&
-                            "ring-2 ring-black"
+                            "border-black scale-110"
                           }`}
                           style={{ backgroundColor: "#ffffff" }}
                         >
@@ -164,12 +143,11 @@ export default function Catalogs() {
                         {COLORS.map((c) => (
                           <button
                             key={c}
-                            onClick={() => {
-                              setColor(cat.id, c);
-                              setOpenColorPicker(null);
-                            }}
-                            className={`w-8 h-8 rounded-full border hover:scale-110 transition ${
-                              colors[cat.id] === c ? "ring-2 ring-black" : ""
+                            onClick={() => setColor(cat.id, c)}
+                            className={`w-8 h-8 rounded-full border-2 ${
+                              colors[cat.id] === c
+                                ? "border-black scale-110"
+                                : "border-transparent"
                             }`}
                             style={{ backgroundColor: c }}
                           />
