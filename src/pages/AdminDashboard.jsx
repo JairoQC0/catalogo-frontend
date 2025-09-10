@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-import { PlusCircle, Trash2, FolderKanban } from "lucide-react";
+import { PlusCircle, Trash2, FolderKanban, AlertTriangle } from "lucide-react";
 
 export default function AdminDashboard() {
   const [catalogs, setCatalogs] = useState([]);
@@ -8,6 +8,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [deleteId, setDeleteId] = useState(null); // 👈 para modal
 
   useEffect(() => {
     fetchCatalogs();
@@ -39,12 +40,17 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const confirmDelete = (id) => {
+    setDeleteId(id);
+  };
+
+  const handleDelete = async () => {
     try {
       setError("");
       setSuccess("");
-      await api.delete(`/catalogs/${id}`);
+      await api.delete(`/catalogs/${deleteId}`);
       setSuccess("🗑️ Catálogo eliminado");
+      setDeleteId(null); // cerrar modal
       fetchCatalogs();
     } catch {
       setError("❌ No se pudo eliminar el catálogo");
@@ -67,7 +73,7 @@ export default function AdminDashboard() {
           Panel de Administración
         </h1>
 
-        {/* mensajes de estado */}
+        {/* mensajes */}
         {error && (
           <div className="bg-red-100 text-red-700 border border-red-300 p-3 rounded-lg mb-4 shadow-sm text-sm sm:text-base">
             {error}
@@ -100,7 +106,7 @@ export default function AdminDashboard() {
           </button>
         </form>
 
-        {/* lista de catálogos */}
+        {/* lista */}
         {catalogs.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {catalogs.map((cat) => (
@@ -112,7 +118,7 @@ export default function AdminDashboard() {
                   {cat.name}
                 </span>
                 <button
-                  onClick={() => handleDelete(cat.id)}
+                  onClick={() => confirmDelete(cat.id)}
                   className="flex items-center justify-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-1.5 rounded-lg transition shadow-md text-sm sm:text-base"
                 >
                   <Trash2 size={16} />
@@ -127,6 +133,35 @@ export default function AdminDashboard() {
           </p>
         )}
       </div>
+
+      {/* modal de confirmación */}
+      {deleteId && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full text-center">
+            <AlertTriangle className="mx-auto text-red-500 mb-3" size={36} />
+            <h2 className="text-lg font-bold text-gray-800 mb-2">
+              ¿Eliminar catálogo?
+            </h2>
+            <p className="text-gray-600 text-sm mb-5">
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow-md transition text-sm"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
