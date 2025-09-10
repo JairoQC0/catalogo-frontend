@@ -14,7 +14,6 @@ export default function Catalogs() {
   const [loading, setLoading] = useState(true);
 
   const { colors, setColor } = useCatalogColors();
-
   const pickerRef = useRef(null);
 
   useEffect(() => {
@@ -31,7 +30,6 @@ export default function Catalogs() {
         setOpenColorPicker(null);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openColorPicker]);
