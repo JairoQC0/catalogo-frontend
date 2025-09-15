@@ -9,14 +9,15 @@ export default function PublicCatalog() {
   const [catalog, setCatalog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedServices, setSelectedServices] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
   const [companyName, setCompanyName] = useState("");
   const [useQuantities, setUseQuantities] = useState(false);
-  const [showToast, setShowToast] = useState(false); // 🔔 toast visual
+  const [usePackages, setUsePackages] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [expandedPackages, setExpandedPackages] = useState([]); // 👈 para "ver más"
 
-  // 🔹 color dinámico desde zustand
   const { colors } = useCatalogColors();
-  const color = colors[id] || "#3b82f6"; // fallback azul
+  const color = colors[id] || "#3b82f6";
 
   useEffect(() => {
     const fetchCatalog = async () => {
@@ -33,29 +34,38 @@ export default function PublicCatalog() {
     fetchCatalog();
   }, [id]);
 
-  const handleToggleService = (service) => {
-    if (selectedServices.find((s) => s.id === service.id)) {
-      setSelectedServices(selectedServices.filter((s) => s.id !== service.id));
+  const handleToggleItem = (item, type) => {
+    const key = `${type}-${item.id}`;
+    if (selectedItems.find((s) => s.key === key)) {
+      setSelectedItems(selectedItems.filter((s) => s.key !== key));
     } else {
-      setSelectedServices([...selectedServices, { ...service, quantity: 1 }]);
+      setSelectedItems([...selectedItems, { ...item, type, key, quantity: 1 }]);
     }
   };
 
-  const handleQuantityChange = (id, delta) => {
-    setSelectedServices((prev) =>
+  const handleQuantityChange = (key, delta) => {
+    setSelectedItems((prev) =>
       prev.map((s) =>
-        s.id === id ? { ...s, quantity: Math.max(1, s.quantity + delta) } : s
+        s.key === key ? { ...s, quantity: Math.max(1, s.quantity + delta) } : s
       )
     );
   };
 
-  const totalPrice = selectedServices.reduce(
+  const toggleExpandPackage = (pkgId) => {
+    setExpandedPackages((prev) =>
+      prev.includes(pkgId)
+        ? prev.filter((id) => id !== pkgId)
+        : [...prev, pkgId]
+    );
+  };
+
+  const totalPrice = selectedItems.reduce(
     (sum, s) => sum + s.price * (useQuantities ? s.quantity : 1),
     0
   );
 
   const handleGeneratePDF = () => {
-    if (selectedServices.length === 0) return;
+    if (selectedItems.length === 0) return;
     const doc = new jsPDF();
 
     doc.setFont("helvetica", "bold");
@@ -73,7 +83,7 @@ export default function PublicCatalog() {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Servicios seleccionados", 14, 55);
+    doc.text("Seleccionados", 14, 55);
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
@@ -81,20 +91,20 @@ export default function PublicCatalog() {
     let y = 65;
     doc.setFont("helvetica", "bold");
     doc.text("N°", 14, y);
-    doc.text("Servicio", 30, y);
+    doc.text("Item", 30, y);
     if (useQuantities) doc.text("Cant.", 140, y, { align: "right" });
     doc.text("Precio (S/.)", 196, y, { align: "right" });
 
     doc.line(14, y + 2, 196, y + 2);
 
     doc.setFont("helvetica", "normal");
-    selectedServices.forEach((srv, index) => {
+    selectedItems.forEach((srv, index) => {
       y += 10;
       const qty = useQuantities ? srv.quantity : 1;
       const totalSrv = srv.price * qty;
 
       doc.text(`${index + 1}`, 14, y);
-      doc.text(srv.name, 30, y);
+      doc.text(`${srv.name} (${srv.type})`, 30, y);
       if (useQuantities) doc.text(`${qty}`, 140, y, { align: "right" });
       doc.text(totalSrv.toFixed(2), 196, y, { align: "right" });
     });
@@ -106,13 +116,12 @@ export default function PublicCatalog() {
     doc.text(`S/. ${totalPrice.toFixed(2)}`, 196, y, { align: "right" });
 
     let safeCompany = companyName.trim().replace(/\s+/g, "_");
-    let filename = `${catalog.name}_servicios`;
+    let filename = `${catalog.name}_seleccionados`;
     if (safeCompany) filename += `_${safeCompany}`;
     filename += ".pdf";
 
     doc.save(filename);
 
-    // 🔔 Mostrar toast
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
@@ -128,15 +137,14 @@ export default function PublicCatalog() {
         background: `linear-gradient(135deg, ${color}15, white 70%)`,
       }}
     >
-      {/* 🔔 Toast flotante */}
       {showToast && (
         <div className="fixed top-6 right-6 bg-emerald-500 text-white px-5 py-3 rounded-xl shadow-lg animate-fade-in-down">
-          ✅ Reporte generado, revisa Descargas
+          Reporte generado, revisa Descargas
         </div>
       )}
 
       <div className="max-w-6xl mx-auto px-6">
-        {/* Título */}
+        {/* Encabezado */}
         <h1
           className="text-4xl font-extrabold mb-12 tracking-tight text-center"
           style={{ color }}
@@ -145,17 +153,145 @@ export default function PublicCatalog() {
         </h1>
 
         <div className="grid lg:grid-cols-3 gap-10">
-          {/* Lista de servicios */}
+          {/* Lista de items */}
           <div className="lg:col-span-2 space-y-6">
-            {catalog.services.map((srv) => {
-              const isSelected = selectedServices.some((s) => s.id === srv.id);
-              const current = selectedServices.find((s) => s.id === srv.id);
+            {/* Paquetes */}
+            {usePackages &&
+              catalog.packages?.map((pkg) => {
+                const isSelected = selectedItems.some(
+                  (s) => s.key === `package-${pkg.id}`
+                );
+                const current = selectedItems.find(
+                  (s) => s.key === `package-${pkg.id}`
+                );
+                const isExpanded = expandedPackages.includes(pkg.id);
+
+                return (
+                  <div
+                    key={`package-${pkg.id}`}
+                    className={`rounded-xl overflow-hidden border-2 transition-all duration-300 ease-in-out ${
+                      isSelected ? "scale-[1.01]" : ""
+                    }`}
+                    style={{
+                      borderColor: isSelected ? color : "#d1d5db",
+                      backgroundColor: isSelected ? `${color}10` : "white",
+                    }}
+                  >
+                    {/* Franja superior */}
+                    <div
+                      className="h-1.5 w-full"
+                      style={{ backgroundColor: color }}
+                    />
+                    <div className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold text-lg">{pkg.name}</p>
+                          <p className="text-gray-500 text-sm mt-1 leading-relaxed">
+                            {pkg.description}
+                          </p>
+                          <p className="font-semibold mt-3 text-gray-800">
+                            S/. {pkg.price}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleItem(pkg, "package")}
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ accentColor: color }}
+                          />
+                          {useQuantities && isSelected && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() =>
+                                  handleQuantityChange(`package-${pkg.id}`, -1)
+                                }
+                                className="w-8 h-8 flex items-center justify-center rounded-full shadow-sm"
+                                style={{
+                                  backgroundColor: `${color}22`,
+                                  color: color,
+                                }}
+                              >
+                                −
+                              </button>
+                              <span className="font-semibold">
+                                {current?.quantity}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  handleQuantityChange(`package-${pkg.id}`, +1)
+                                }
+                                className="w-8 h-8 flex items-center justify-center rounded-full shadow-sm"
+                                style={{
+                                  backgroundColor: `${color}22`,
+                                  color: color,
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Botón Ver más */}
+                      {pkg.services?.length > 0 && (
+                        <div className="mt-4">
+                          <button
+                            onClick={() => toggleExpandPackage(pkg.id)}
+                            className="text-sm font-medium px-3 py-1 rounded-lg transition-all"
+                            style={{
+                              backgroundColor: `${color}15`,
+                              color: color,
+                            }}
+                          >
+                            {isExpanded ? "Ocultar servicios" : "Ver servicios"}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Servicios dentro del paquete */}
+                      {isExpanded && (
+                        <div className="mt-4 space-y-2">
+                          {pkg.services.map((srv) => (
+                            <div
+                              key={srv.id}
+                              className="pl-4 border-l-4 py-2 text-sm"
+                              style={{ borderColor: color }}
+                            >
+                              <p className="font-semibold text-gray-800">
+                                {srv.name}
+                              </p>
+                              <p className="text-gray-500 text-xs">
+                                {srv.description}
+                              </p>
+                              <p className="text-gray-600 text-sm">
+                                S/. {srv.price}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {/* Servicios */}
+            {catalog.services?.map((srv) => {
+              const isSelected = selectedItems.some(
+                (s) => s.key === `service-${srv.id}`
+              );
+              const current = selectedItems.find(
+                (s) => s.key === `service-${srv.id}`
+              );
 
               return (
                 <div
-                  key={srv.id}
-                  onClick={() => handleToggleService(srv)}
-                  className={`cursor-pointer rounded-xl p-6 border transition-all duration-300 ease-in-out transform hover:shadow-lg hover:-translate-y-1 ${
+                  key={`service-${srv.id}`}
+                  onClick={() => handleToggleItem(srv, "service")}
+                  className={`cursor-pointer rounded-lg p-6 border transition-all duration-300 ease-in-out hover:shadow-md hover:-translate-y-1 ${
                     isSelected ? "scale-[1.01]" : ""
                   }`}
                   style={{
@@ -169,7 +305,9 @@ export default function PublicCatalog() {
                       <p className="text-gray-500 text-sm mt-1 leading-relaxed">
                         {srv.description}
                       </p>
-                      <p className="font-bold mt-3">S/. {srv.price}</p>
+                      <p className="font-semibold mt-3 text-gray-800">
+                        S/. {srv.price}
+                      </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <input
@@ -185,8 +323,10 @@ export default function PublicCatalog() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
-                            onClick={() => handleQuantityChange(srv.id, -1)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 shadow-sm"
+                            onClick={() =>
+                              handleQuantityChange(`service-${srv.id}`, -1)
+                            }
+                            className="w-8 h-8 flex items-center justify-center rounded-full shadow-sm"
                             style={{
                               backgroundColor: `${color}22`,
                               color: color,
@@ -194,12 +334,14 @@ export default function PublicCatalog() {
                           >
                             −
                           </button>
-                          <span className="font-semibold text-gray-700 text-base min-w-[24px] text-center">
+                          <span className="font-semibold">
                             {current?.quantity}
                           </span>
                           <button
-                            onClick={() => handleQuantityChange(srv.id, +1)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 shadow-sm"
+                            onClick={() =>
+                              handleQuantityChange(`service-${srv.id}`, +1)
+                            }
+                            className="w-8 h-8 flex items-center justify-center rounded-full shadow-sm"
                             style={{
                               backgroundColor: `${color}22`,
                               color: color,
@@ -216,14 +358,13 @@ export default function PublicCatalog() {
             })}
           </div>
 
-          {/* Sidebar resumen */}
+          {/* Sidebar */}
           <div className="bg-white p-6 rounded-xl shadow-lg h-fit sticky top-6 border">
             <h2 className="text-2xl font-bold mb-6" style={{ color }}>
               Resumen de selección
             </h2>
 
-            {/* Activar cantidades */}
-            <div className="flex items-center mb-6">
+            <div className="flex items-center mb-3">
               <input
                 type="checkbox"
                 checked={useQuantities}
@@ -236,7 +377,17 @@ export default function PublicCatalog() {
               </label>
             </div>
 
-            {/* Input empresa */}
+            <div className="flex items-center mb-6">
+              <input
+                type="checkbox"
+                checked={usePackages}
+                onChange={(e) => setUsePackages(e.target.checked)}
+                className="w-5 h-5 mr-2"
+                style={{ accentColor: color }}
+              />
+              <label className="text-sm text-gray-700">Activar paquetes</label>
+            </div>
+
             <div className="mb-6">
               <input
                 type="text"
@@ -252,22 +403,22 @@ export default function PublicCatalog() {
               />
             </div>
 
-            {selectedServices.length === 0 ? (
+            {selectedItems.length === 0 ? (
               <p className="text-gray-500 text-sm italic">
-                No has seleccionado ningún servicio
+                No has seleccionado ningún elemento
               </p>
             ) : (
               <ul className="space-y-3 mb-6 text-gray-700">
-                {selectedServices.map((srv) => {
+                {selectedItems.map((srv) => {
                   const qty = useQuantities ? srv.quantity : 1;
                   return (
                     <li
-                      key={srv.id}
+                      key={srv.key}
                       className="flex justify-between text-sm border-b pb-1"
                       style={{ borderColor: `${color}33` }}
                     >
                       <span>
-                        {srv.name} {useQuantities && `x${qty}`}
+                        {srv.name} ({srv.type}) {useQuantities && `x${qty}`}
                       </span>
                       <span className="font-medium">
                         S/. {(srv.price * qty).toFixed(2)}
@@ -283,8 +434,7 @@ export default function PublicCatalog() {
               <p className="font-bold text-lg">S/. {totalPrice.toFixed(2)}</p>
             </div>
 
-            {/* Botón PDF */}
-            {selectedServices.length > 0 && (
+            {selectedItems.length > 0 && (
               <button
                 onClick={handleGeneratePDF}
                 className="w-full py-3 rounded-lg font-semibold shadow-md transition-all duration-300 ease-in-out hover:scale-[1.02]"
@@ -293,7 +443,7 @@ export default function PublicCatalog() {
                   color: "#fff",
                 }}
               >
-                📄 Generar PDF
+                Generar PDF
               </button>
             )}
           </div>

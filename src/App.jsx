@@ -8,10 +8,12 @@ import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import Catalogs from "./pages/Catalogs";
 import Services from "./pages/Services";
+import PackagesPage from "./pages/PackagesPage";
 
 import AdminLayout from "./layouts/AdminLayout";
 import UserLayout from "./layouts/UserLayout";
 import PublicCatalog from "./pages/PublicCatalog";
+
 export default function App() {
   return (
     <AuthProvider>
@@ -21,6 +23,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/catalogs/:id" element={<PublicCatalog />} />
+
           {/* Usuario normal */}
           <Route
             path="/profile"
@@ -45,6 +48,8 @@ export default function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="catalogs" element={<Catalogs />} />
             <Route path="services" element={<Services />} />
+            <Route path="packages" element={<PackagesPage />} />{" "}
+            {/* 👈 Ruta paquetes */}
           </Route>
         </Routes>
       </BrowserRouter>

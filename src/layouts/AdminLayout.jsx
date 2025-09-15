@@ -1,6 +1,13 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Menu, X, LayoutDashboard, Package, Wrench } from "lucide-react";
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  Package,
+  Wrench,
+  Boxes, // 👈 nuevo ícono
+} from "lucide-react";
 
 export default function AdminLayout() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +17,7 @@ export default function AdminLayout() {
     { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
     { to: "/admin/catalogs", label: "Catálogos", icon: <Package size={18} /> },
     { to: "/admin/services", label: "Servicios", icon: <Wrench size={18} /> },
+    { to: "/admin/packages", label: "Paquetes", icon: <Boxes size={18} /> }, // ✅ nuevo
   ];
 
   return (
