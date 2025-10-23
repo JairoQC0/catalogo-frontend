@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { PlusCircle, Pencil, Trash2, Package, Loader2, X } from "lucide-react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+import "react-quill-new/dist/quill.bubble.css";
+import "../quill-custom.css";
 
-// 📦 Formulario de Paquetes
 function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
   const [name, setName] = useState(initialData?.name || "");
   const [description, setDescription] = useState(
@@ -17,14 +20,13 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 👉 Traer servicios por catálogo
   useEffect(() => {
     if (!catalogId) return setServices([]);
     api
       .get(`/catalogs/${catalogId}`)
       .then((res) => setServices(res.data.services || []))
-      .catch((err) =>
-        setError(err.response?.data?.error || "Error cargando servicios")
+      .catch(() =>
+        setError("Error al cargar los servicios del catálogo seleccionado")
       );
   }, [catalogId]);
 
@@ -38,7 +40,6 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
       const body = {
         name,
@@ -48,7 +49,6 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
         serviceIds: serviceIds.map(Number),
       };
       await onSubmit(body);
-
       if (!initialData) {
         setName("");
         setDescription("");
@@ -56,17 +56,36 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
         setCatalogId("");
         setServiceIds([]);
       }
-    } catch (err) {
-      setError(err.response?.data?.error || "Error procesando paquete");
+    } catch {
+      setError("Error procesando el paquete");
     } finally {
       setLoading(false);
     }
   };
 
+  const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, false] }],
+      ["bold", "italic", "underline"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link", "clean"],
+    ],
+  };
+
+  const quillFormats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "list",
+    "bullet",
+    "link",
+  ];
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 bg-white p-6 rounded-xl shadow-md border border-gray-100"
+      className="space-y-6 bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
     >
       {error && (
         <div className="bg-red-100 text-red-700 border border-red-300 p-3 rounded-lg text-sm">
@@ -74,51 +93,61 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
         </div>
       )}
 
-      {/* Grid de inputs */}
       <div className="grid sm:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold mb-1">Nombre</label>
+          <label className="block font-semibold text-gray-700 mb-2">
+            Nombre del paquete
+          </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="Ej. Paquete de Marketing Digital"
+            className="border border-gray-300 rounded-xl px-3 py-2 w-full shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-gray-50 hover:bg-white transition"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-1">
+          <label className="block font-semibold text-gray-700 mb-2">
             Precio (S/.)
           </label>
           <input
             type="number"
+            step="0.01"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="S/. 0.00"
+            className="border border-gray-300 rounded-xl px-3 py-2 w-full shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-gray-50 hover:bg-white transition"
             required
           />
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-sm font-semibold mb-1">
+          <label className="block font-semibold text-gray-700 mb-2">
             Descripción
           </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows="3"
-            className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            required
-          />
+          <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition bg-gray-50">
+            <ReactQuill
+              theme="snow"
+              value={description}
+              onChange={setDescription}
+              modules={quillModules}
+              formats={quillFormats}
+              className="custom-quill bg-white rounded-b-xl"
+              placeholder="Describe el contenido del paquete, agrega listas, negritas, títulos..."
+            />
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-1">Catálogo</label>
+          <label className="block font-semibold text-gray-700 mb-2">
+            Catálogo
+          </label>
           <select
             value={catalogId}
             onChange={(e) => setCatalogId(e.target.value)}
-            className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="border border-gray-300 rounded-xl px-3 py-2 w-full shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-gray-50 hover:bg-white transition"
             required
           >
             <option value="">-- Selecciona un catálogo --</option>
@@ -133,7 +162,9 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
 
       {services.length > 0 && (
         <div>
-          <label className="block text-sm font-semibold mb-2">Servicios</label>
+          <label className="block font-semibold text-gray-700 mb-2">
+            Servicios incluidos
+          </label>
           <div className="grid sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
             {services.map((s) => (
               <label key={s.id} className="flex items-center gap-2 text-sm">
@@ -154,7 +185,7 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:from-blue-600 hover:to-indigo-700 transition"
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold shadow-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-200"
         >
           <PlusCircle size={18} />
           {loading ? "Procesando..." : initialData ? "Actualizar" : "Crear"}
@@ -164,7 +195,7 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
           <button
             type="button"
             onClick={onCancel}
-            className="bg-gray-200 text-gray-800 px-5 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
+            className="bg-gray-200 text-gray-800 px-6 py-2.5 rounded-xl hover:bg-gray-300 transition font-medium shadow-sm"
           >
             Cancelar
           </button>
@@ -174,10 +205,8 @@ function PackageForm({ initialData, catalogs, onSubmit, onCancel }) {
   );
 }
 
-// 🖼️ Modal de confirmación
 function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
   if (!open) return null;
-
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
@@ -210,7 +239,6 @@ function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
   );
 }
 
-// 📄 Página principal
 export default function PackagesPage() {
   const [packages, setPackages] = useState([]);
   const [catalogs, setCatalogs] = useState([]);
@@ -228,8 +256,8 @@ export default function PackagesPage() {
         ]);
         setPackages(pkgRes.data);
         setCatalogs(catRes.data);
-      } catch (err) {
-        setError(err.response?.data?.error || "Error cargando datos");
+      } catch {
+        setError("Error cargando datos");
       } finally {
         setLoading(false);
       }
@@ -260,8 +288,7 @@ export default function PackagesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Título */}
-        <h1 className="text-2xl sm:text-3xl font-extrabold mb-8 flex items-center gap-3 text-gray-800">
+        <h1 className="text-3xl font-extrabold mb-8 flex items-center gap-3 text-gray-800">
           <Package className="text-blue-600" size={32} />
           Gestión de Paquetes
         </h1>
@@ -279,7 +306,6 @@ export default function PackagesPage() {
           </div>
         )}
 
-        {/* Formulario */}
         <div className="mb-10">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             {editingPackage ? "Editar Paquete" : "Nuevo Paquete"}
@@ -293,7 +319,6 @@ export default function PackagesPage() {
           />
         </div>
 
-        {/* Lista de paquetes */}
         {packages.length === 0 ? (
           <p className="text-gray-500 text-center mt-8">
             No hay paquetes registrados aún.
@@ -303,39 +328,47 @@ export default function PackagesPage() {
             {packages.map((pkg) => (
               <li
                 key={pkg.id}
-                className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition"
+                className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition"
               >
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-bold text-gray-900 text-lg">
                       {pkg.name}
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {pkg.description}
-                    </p>
-                    <p className="text-sm font-semibold text-blue-600 mt-2">
-                      S/. {pkg.price}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Catálogo: {pkg.catalog?.name || "—"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Servicios:{" "}
-                      {pkg.services?.length > 0
-                        ? pkg.services.map((s) => s.name).join(", ")
-                        : "—"}
-                    </p>
+                    <div
+                      className="ql-bubble ql-editor p-0 text-gray-700 mt-3"
+                      dangerouslySetInnerHTML={{ __html: pkg.description }}
+                    />
+                    <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-600">
+                      <span>
+                        <strong className="text-blue-600">
+                          S/. {pkg.price}
+                        </strong>
+                      </span>
+                      <span>
+                        Catálogo: <strong>{pkg.catalog?.name || "—"}</strong>
+                      </span>
+                      <span>
+                        Servicios:{" "}
+                        <strong>
+                          {pkg.services?.length > 0
+                            ? pkg.services.map((s) => s.name).join(", ")
+                            : "—"}
+                        </strong>
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+
+                  <div className="flex gap-2 shrink-0">
                     <button
                       onClick={() => setEditingPackage(pkg)}
-                      className="flex items-center gap-1 bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition shadow"
+                      className="flex items-center gap-1 bg-blue-500 text-white px-5 py-2 rounded-xl hover:bg-blue-600 transition shadow-md"
                     >
                       <Pencil size={16} /> Editar
                     </button>
                     <button
                       onClick={() => setDeleteTarget(pkg)}
-                      className="flex items-center gap-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition shadow"
+                      className="flex items-center gap-1 bg-red-500 text-white px-5 py-2 rounded-xl hover:bg-red-600 transition shadow-md"
                     >
                       <Trash2 size={16} /> Eliminar
                     </button>
@@ -347,7 +380,6 @@ export default function PackagesPage() {
         )}
       </div>
 
-      {/* Modal de confirmación */}
       <ConfirmModal
         open={!!deleteTarget}
         title="Eliminar Paquete"
