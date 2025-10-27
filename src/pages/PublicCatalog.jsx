@@ -24,68 +24,78 @@ function CatalogItem({
   const isPackage = item.type === "package";
   const isExpanded = expandedPackages.includes(item.id);
   const [showDescription, setShowDescription] = useState(false);
-  const bg = isSelected ? `${color}22` : "white";
+  const bg = isSelected ? `${color}10` : "white";
   const border = isSelected ? color : "#e5e7eb";
 
   return (
     <div
-      className="p-5 rounded-2xl shadow-sm border hover:shadow-md transition"
+      className="p-6 rounded-2xl border shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
       style={{ borderColor: border, background: bg }}
     >
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-        <span className="font-bold text-gray-800">S/. {item.price}</span>
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-xl font-semibold text-gray-900 leading-snug">
+          {item.name}
+        </h3>
+        <span className="text-lg font-bold text-gray-800 bg-gray-100 px-3 py-1 rounded-lg">
+          S/. {item.price}
+        </span>
       </div>
 
       <button
         onClick={() => setShowDescription(!showDescription)}
-        className="text-sm text-blue-600 mb-2 hover:underline"
+        className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition mb-3"
       >
         {showDescription ? "Ocultar descripción" : "Ver descripción"}
       </button>
 
-      {showDescription && (
-        <div
-          className="ql-bubble ql-editor text-gray-700 mb-2"
-          dangerouslySetInnerHTML={{ __html: item.description }}
-        />
-      )}
+      <div
+        className={`transition-all duration-500 overflow-hidden ${
+          showDescription ? "max-h-64" : "max-h-0"
+        }`}
+      >
+        {showDescription && (
+          <div className="ql-bubble ql-editor text-gray-700 text-sm leading-relaxed border rounded-lg p-3 bg-gray-50 overflow-y-auto max-h-60">
+            <div dangerouslySetInnerHTML={{ __html: item.description }} />
+          </div>
+        )}
+      </div>
 
       {isPackage && item.services?.length > 0 && (
         <button
           onClick={() => toggleExpandPackage(item.id)}
-          className="text-sm text-blue-600 mt-1 hover:underline"
+          className="text-sm text-blue-600 mt-3 hover:underline"
         >
-          {isExpanded ? "Ocultar servicios" : "Ver servicios"}
+          {isExpanded ? "Ocultar servicios" : "Ver servicios incluidos"}
         </button>
       )}
 
       {isPackage && isExpanded && (
-        <ul className="mt-2 ml-4 list-disc text-gray-600">
+        <ul className="mt-3 ml-4 list-disc text-gray-600 text-sm space-y-1">
           {item.services.map((s) => (
             <li key={s.id}>{s.name}</li>
           ))}
         </ul>
       )}
 
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex items-center justify-between mt-6">
         {useQuantities && isSelected && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => handleQuantityChange(current.key, -1)}
-              className="bg-gray-200 px-2 rounded-full hover:bg-gray-300"
+              className="bg-gray-200 px-3 py-1 rounded-full font-bold hover:bg-gray-300 transition"
             >
               −
             </button>
-            <span>{current.quantity}</span>
+            <span className="font-medium">{current.quantity}</span>
             <button
               onClick={() => handleQuantityChange(current.key, 1)}
-              className="bg-gray-200 px-2 rounded-full hover:bg-gray-300"
+              className="bg-gray-200 px-3 py-1 rounded-full font-bold hover:bg-gray-300 transition"
             >
               +
             </button>
           </div>
         )}
+
         <button
           onClick={() => handleToggleItem(item, item.type)}
           style={{
@@ -93,7 +103,7 @@ function CatalogItem({
             color: isSelected ? "white" : color,
             borderColor: color,
           }}
-          className="border px-4 py-2 rounded-lg font-semibold text-sm transition-all"
+          className="border px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:shadow-md"
         >
           {isSelected ? "Quitar" : "Seleccionar"}
         </button>
@@ -239,25 +249,37 @@ export default function PublicCatalog() {
     return items;
   };
 
-  if (loading) return <p className="p-4">Cargando catálogo...</p>;
-  if (error) return <p className="p-4 text-red-500">{error}</p>;
-  if (!catalog) return <p className="p-4">Catálogo no encontrado</p>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen text-gray-500 text-lg">
+        Cargando catálogo...
+      </div>
+    );
+  if (error)
+    return (
+      <p className="p-4 text-center text-red-500 font-semibold">{error}</p>
+    );
+  if (!catalog)
+    return (
+      <p className="p-4 text-center text-gray-600">Catálogo no encontrado</p>
+    );
 
   return (
     <div
-      className="min-h-screen py-10 relative"
+      className="min-h-screen py-12 relative"
       style={{
-        background: `linear-gradient(135deg, ${color}15, white 70%)`,
+        background: `linear-gradient(135deg, ${color}20, white 70%)`,
       }}
     >
       <Toast show={showToast} message="Reporte generado, revisa Descargas" />
       <div className="max-w-6xl mx-auto px-6">
         <h1
-          className="text-4xl font-extrabold mb-6 tracking-tight text-center"
+          className="text-4xl font-extrabold mb-10 tracking-tight text-center"
           style={{ color }}
         >
           {catalog.name}
         </h1>
+
         <CatalogFilters
           filterType={filterType}
           setFilterType={setFilterType}
@@ -267,8 +289,9 @@ export default function PublicCatalog() {
           setSortPrice={setSortPrice}
           color={color}
         />
-        <div className="grid lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-6">
+
+        <div className="grid lg:grid-cols-3 gap-10 mt-8">
+          <div className="lg:col-span-2 space-y-8">
             {getFilteredAndSortedItems().map((item) => {
               const key = `${item.type}-${item.id}`;
               const isSelected = selectedItems.some((s) => s.key === key);
@@ -289,6 +312,7 @@ export default function PublicCatalog() {
               );
             })}
           </div>
+
           <CatalogSidebar
             selectedItems={selectedItems}
             useQuantities={useQuantities}
