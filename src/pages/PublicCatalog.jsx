@@ -23,6 +23,7 @@ function CatalogItem({
 }) {
   const isPackage = item.type === "package";
   const isExpanded = expandedPackages.includes(item.id);
+  const [showDescription, setShowDescription] = useState(false);
   const bg = isSelected ? `${color}22` : "white";
   const border = isSelected ? color : "#e5e7eb";
 
@@ -36,15 +37,24 @@ function CatalogItem({
         <span className="font-bold text-gray-800">S/. {item.price}</span>
       </div>
 
-      <div
-        className="ql-bubble ql-editor text-gray-700"
-        dangerouslySetInnerHTML={{ __html: item.description }}
-      />
+      <button
+        onClick={() => setShowDescription(!showDescription)}
+        className="text-sm text-blue-600 mb-2 hover:underline"
+      >
+        {showDescription ? "Ocultar descripción" : "Ver descripción"}
+      </button>
+
+      {showDescription && (
+        <div
+          className="ql-bubble ql-editor text-gray-700 mb-2"
+          dangerouslySetInnerHTML={{ __html: item.description }}
+        />
+      )}
 
       {isPackage && item.services?.length > 0 && (
         <button
           onClick={() => toggleExpandPackage(item.id)}
-          className="text-sm text-blue-600 mt-2 hover:underline"
+          className="text-sm text-blue-600 mt-1 hover:underline"
         >
           {isExpanded ? "Ocultar servicios" : "Ver servicios"}
         </button>
@@ -76,7 +86,6 @@ function CatalogItem({
             </button>
           </div>
         )}
-
         <button
           onClick={() => handleToggleItem(item, item.type)}
           style={{
@@ -158,17 +167,14 @@ export default function PublicCatalog() {
   const handleGeneratePDF = () => {
     if (selectedItems.length === 0) return;
     const doc = new jsPDF();
-
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     doc.text(catalog.name, 105, 20, { align: "center" });
-
     if (companyName.trim() !== "") {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(14);
       doc.text(`Empresa: ${companyName}`, 14, 35);
     }
-
     doc.setDrawColor(200, 200, 200);
     doc.line(14, 42, 196, 42);
     doc.setFont("helvetica", "bold");
@@ -176,14 +182,12 @@ export default function PublicCatalog() {
     doc.text("Seleccionados", 14, 55);
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-
     let y = 65;
     doc.text("N°", 14, y);
     doc.text("Item", 30, y);
     if (useQuantities) doc.text("Cant.", 140, y, { align: "right" });
     doc.text("Precio (S/.)", 196, y, { align: "right" });
     doc.line(14, y + 2, 196, y + 2);
-
     selectedItems.forEach((srv, index) => {
       y += 10;
       const qty = useQuantities ? srv.quantity : 1;
@@ -193,19 +197,16 @@ export default function PublicCatalog() {
       if (useQuantities) doc.text(`${qty}`, 140, y, { align: "right" });
       doc.text(totalSrv.toFixed(2), 196, y, { align: "right" });
     });
-
     y += 15;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.text("Total:", 130, y);
     doc.text(`S/. ${totalPrice.toFixed(2)}`, 196, y, { align: "right" });
-
     let safeCompany = companyName.trim().replace(/\s+/g, "_");
     let filename = `${catalog.name}_seleccionados`;
     if (safeCompany) filename += `_${safeCompany}`;
     filename += ".pdf";
     doc.save(filename);
-
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
