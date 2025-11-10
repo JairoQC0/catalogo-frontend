@@ -124,7 +124,7 @@ export default function PublicCatalog() {
   const [showToast, setShowToast] = useState(false);
   const [expandedPackages, setExpandedPackages] = useState([]);
   const [filterType, setFilterType] = useState("all");
-  const [sortName, setSortName] = useState("none");
+  const [sortName, setSortName] = useState("asc");
   const [sortPrice, setSortPrice] = useState("none");
   const { colors } = useCatalogColors();
   const color = colors[id] || "#3b82f6";
