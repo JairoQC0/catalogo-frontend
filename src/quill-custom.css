@@ -26,3 +26,19 @@
 .ql-toolbar button.ql-active {
   color: #2563eb !important;
 }
+
+.service-html ul,
+.service-html ol {
+  list-style: disc !important;
+  margin-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.service-html li {
+  margin-bottom: 0.35rem;
+}
+
+
+body {
+  font-family: 'Montserrat', sans-serif;
+}

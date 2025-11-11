@@ -8,23 +8,16 @@ export default function CatalogFilters({
   color,
 }) {
   return (
-    <div className="flex flex-wrap gap-6 justify-center mb-12">
-      {/* Filtro por tipo */}
-      <div
-        className="flex flex-col bg-white shadow-md rounded-xl p-4 w-52 transition hover:shadow-lg"
-        style={{ borderTop: `3px solid ${color}` }}
-      >
-        <label className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+    <div className="flex flex-wrap gap-4 items-stretch bg-white/70 backdrop-blur-sm rounded-2xl p-4 shadow-sm">
+      <div className="flex flex-col min-w-[170px] flex-1">
+        <label className="text-xs font-semibold text-gray-500 mb-1">
           Filtrar por
         </label>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
           className="px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:outline-none"
-          style={{
-            borderColor: color,
-            boxShadow: `0 0 0 1px ${color}33`,
-          }}
+          style={{ borderColor: color }}
         >
           <option value="all">Todos</option>
           <option value="service">Servicios</option>
@@ -32,12 +25,8 @@ export default function CatalogFilters({
         </select>
       </div>
 
-      {/* Ordenar por nombre */}
-      <div
-        className="flex flex-col bg-white shadow-md rounded-xl p-4 w-52 transition hover:shadow-lg"
-        style={{ borderTop: `3px solid ${color}` }}
-      >
-        <label className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+      <div className="flex flex-col min-w-[170px] flex-1">
+        <label className="text-xs font-semibold text-gray-500 mb-1">
           Ordenar por nombre
         </label>
         <select
@@ -47,10 +36,7 @@ export default function CatalogFilters({
             setSortPrice("none");
           }}
           className="px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:outline-none"
-          style={{
-            borderColor: color,
-            boxShadow: `0 0 0 1px ${color}33`,
-          }}
+          style={{ borderColor: color }}
         >
           <option value="none">Ninguno</option>
           <option value="asc">A → Z</option>
@@ -58,12 +44,8 @@ export default function CatalogFilters({
         </select>
       </div>
 
-      {/* Ordenar por precio */}
-      <div
-        className="flex flex-col bg-white shadow-md rounded-xl p-4 w-52 transition hover:shadow-lg"
-        style={{ borderTop: `3px solid ${color}` }}
-      >
-        <label className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+      <div className="flex flex-col min-w-[170px] flex-1">
+        <label className="text-xs font-semibold text-gray-500 mb-1">
           Ordenar por precio
         </label>
         <select
@@ -73,10 +55,7 @@ export default function CatalogFilters({
             setSortName("none");
           }}
           className="px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:outline-none"
-          style={{
-            borderColor: color,
-            boxShadow: `0 0 0 1px ${color}33`,
-          }}
+          style={{ borderColor: color }}
         >
           <option value="none">Ninguno</option>
           <option value="asc">Menor a mayor</option>

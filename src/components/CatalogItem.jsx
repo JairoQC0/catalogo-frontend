@@ -1,3 +1,7 @@
+import { useState } from "react";
+import ServiceDescriptionModal from "./ServiceDescriptionModal";
+import { motion } from "framer-motion";
+
 export default function CatalogItem({
   item,
   isSelected,
@@ -9,175 +13,144 @@ export default function CatalogItem({
   toggleExpandPackage,
   expandedPackages,
 }) {
+  const [openDesc, setOpenDesc] = useState(false);
+
   const key = `${item.type}-${item.id}`;
-  const isExpanded =
-    item.type === "package" && expandedPackages.includes(item.id);
-
-  // Helpers
-  const hexToRgb = (hex) => {
-    let h = (hex || "#3b82f6").replace("#", "");
-    if (h.length === 3)
-      h = h
-        .split("")
-        .map((c) => c + c)
-        .join("");
-    const n = parseInt(h, 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  };
-  const rgba = (hex, alpha = 1) => {
-    const [r, g, b] = hexToRgb(hex);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
-
+  const isPackage = item.type === "package";
+  const isExpanded = isPackage && expandedPackages.includes(item.id);
   const accent = color || "#3b82f6";
-  const neutralGray = "#9ca3af";
-  const selectedBg = rgba(accent, 0.06);
 
-  const badgeBg = item.type === "package" ? rgba(accent, 0.12) : "#f3f4f6";
-  const badgeColor = item.type === "package" ? accent : "#6b7280";
-  const badgeBorder = item.type === "package" ? accent : neutralGray;
-
-  const leftAccent = item.type === "package" ? accent : neutralGray;
-  const innerServiceBorder = rgba(accent, 0.18);
+  // sacar un resumen corto del HTML
+  const getShortText = (html, limit = 140) => {
+    if (!html) return "Sin descripción.";
+    // quitar tags
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    const text = tmp.textContent || tmp.innerText || "";
+    if (text.length <= limit) return text;
+    return text.slice(0, limit) + "…";
+  };
 
   return (
-    <div
-      key={key}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleToggleItem(item, item.type);
-        }
-      }}
-      onClick={() => handleToggleItem(item, item.type)}
-      className={`relative cursor-pointer rounded-xl p-6 border transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 ${
-        isSelected ? "scale-[1.01]" : ""
-      }`}
-      style={{
-        borderColor: isSelected ? accent : neutralGray,
-        borderLeft: `4px solid ${leftAccent}`,
-        backgroundColor: isSelected ? selectedBg : "white",
-        outline: "none",
-      }}
-    >
-      {/* Badge tipo */}
-      <span
-        className="absolute top-3 right-3 text-xs font-bold px-2 py-1 rounded-md shadow-sm"
+    <>
+      <motion.div
+        whileHover={{ y: -4, scale: 1.01 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className="rounded-2xl border bg-white shadow-sm flex flex-col h-full"
         style={{
-          backgroundColor: badgeBg,
-          color: badgeColor,
-          border: `1px solid ${badgeBorder}`, // 🔥 borde en la etiqueta
+          borderColor: isSelected ? accent : "#e5e7eb",
+          backgroundColor: isSelected ? `${accent}08` : "white",
         }}
       >
-        {item.type === "package" ? "Paquete" : "Servicio"}
-      </span>
-
-      {/* Contenido */}
-      <div className="flex flex-col gap-3">
-        <div>
-          <p className="font-bold text-lg text-gray-900 leading-tight">
-            {item.name}
-          </p>
-          <p className="text-gray-500 text-sm mt-1 leading-relaxed">
-            {item.description}
-          </p>
-          <p className="font-semibold mt-3 text-gray-800 text-lg">
-            S/. {item.price}
-          </p>
+        {/* header */}
+        <div className="flex justify-between gap-3 p-5 pb-2">
+          <div className="flex-1">
+            <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
+              {isPackage ? "Paquete" : "Servicio"}
+            </p>
+            <h3 className="text-lg font-semibold text-gray-900 leading-snug">
+              {item.name}
+            </h3>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-400">Precio</p>
+            <p className="text-xl font-bold text-gray-800">
+              S/. {item.price}
+            </p>
+          </div>
         </div>
 
-        {/* Acciones */}
-        <div
-          className="flex items-center justify-end gap-3 pt-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <input
-            type="checkbox"
-            checked={isSelected}
-            readOnly
-            aria-checked={isSelected}
-            className="w-5 h-5 cursor-pointer"
-            style={{ accentColor: accent }}
-          />
+        {/* resumen corto */}
+        <div className="px-5 pt-1 pb-2 flex-1">
+          <p className="text-sm text-gray-500 leading-relaxed mb-2">
+            {getShortText(item.description)}
+          </p>
+          <button
+            onClick={() => setOpenDesc(true)}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Ver descripción
+          </button>
+        </div>
 
-          {useQuantities && isSelected && (
-            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1">
+        {/* si es paquete, botón para ver servicios */}
+        {isPackage && item.services?.length > 0 && (
+          <div className="px-5 pb-1">
+            <button
+              type="button"
+              onClick={() => toggleExpandPackage(item.id)}
+              className="text-xs font-medium text-blue-600 hover:underline"
+            >
+              {isExpanded
+                ? "Ocultar servicios incluidos"
+                : "Ver servicios incluidos"}
+            </button>
+          </div>
+        )}
+
+        {/* servicios del paquete */}
+        {isPackage && isExpanded && (
+          <ul className="px-5 pb-3 pt-2 space-y-2">
+            {item.services.map((srv) => (
+              <li
+                key={srv.id}
+                className="text-sm bg-gray-50 border border-gray-100 rounded-lg px-3 py-2"
+              >
+                {srv.name}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* pie */}
+        <div className="px-5 py-4 mt-auto flex items-center justify-between gap-3 border-t bg-white rounded-b-2xl">
+          {useQuantities && isSelected ? (
+            <div className="flex items-center gap-2 bg-gray-50 rounded-full px-2 py-1">
               <button
-                type="button"
                 onClick={() => handleQuantityChange(key, -1)}
                 className="w-8 h-8 flex items-center justify-center rounded-full font-bold"
-                style={{
-                  backgroundColor: rgba(accent, 0.13),
-                  color: accent,
-                }}
+                style={{ backgroundColor: `${accent}22`, color: accent }}
               >
                 −
               </button>
-              <span className="font-semibold select-none">
+              <span className="font-semibold text-gray-800">
                 {current?.quantity}
               </span>
               <button
-                type="button"
                 onClick={() => handleQuantityChange(key, +1)}
                 className="w-8 h-8 flex items-center justify-center rounded-full font-bold"
-                style={{
-                  backgroundColor: rgba(accent, 0.13),
-                  color: accent,
-                }}
+                style={{ backgroundColor: `${accent}22`, color: accent }}
               >
                 +
               </button>
             </div>
+          ) : (
+            <span className="text-xs text-gray-400">
+              {isPackage ? "Paquete disponible" : "Servicio disponible"}
+            </span>
           )}
-        </div>
-      </div>
 
-      {/* Servicios dentro del paquete */}
-      {item.type === "package" && item.services?.length > 0 && (
-        <div className="mt-5">
           <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleExpandPackage(item.id);
-            }}
-            className="text-sm font-medium px-4 py-2 rounded-lg transition-all hover:shadow-md"
+            onClick={() => handleToggleItem(item, item.type)}
+            className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
             style={{
-              backgroundColor: rgba(accent, 0.06),
-              color: accent,
+              backgroundColor: isSelected ? accent : "white",
+              color: isSelected ? "white" : accent,
               border: `1px solid ${accent}`,
             }}
           >
-            {isExpanded ? "Ocultar servicios" : "Ver servicios"}
+            {isSelected ? "Quitar" : "Seleccionar"}
           </button>
-
-          {isExpanded && (
-            <div
-              className="mt-4 space-y-3 rounded-lg p-4"
-              style={{
-                backgroundColor: "#f9fafb",
-                border: "1px solid #e5e7eb",
-              }}
-            >
-              {item.services.map((srv) => (
-                <div
-                  key={srv.id}
-                  className="pl-3 border-l-4 py-2 text-sm bg-white rounded-md shadow-sm"
-                  style={{ borderColor: innerServiceBorder }}
-                >
-                  <p className="font-semibold text-gray-800">{srv.name}</p>
-                  <p className="text-gray-500 text-xs">{srv.description}</p>
-                  <p className="text-gray-700 text-sm font-medium">
-                    S/. {srv.price}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
-      )}
-    </div>
+      </motion.div>
+
+      {/* MODAL DE DESCRIPCIÓN */}
+      <ServiceDescriptionModal
+        open={openDesc}
+        onClose={() => setOpenDesc(false)}
+        title={item.name}
+        htmlDescription={item.description}
+      />
+    </>
   );
 }
