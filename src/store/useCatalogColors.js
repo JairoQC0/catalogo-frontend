@@ -10,6 +10,9 @@ export const COLORS = [
   "#60a5fa", // azul
   "#a78bfa", // violeta
   "#f472b6", // rosa
+  "#2a1f9a",
+  "#303030",
+  "#ffb800",
 ];
 
 // Utilidad para contraste (blanco o negro según el fondo)

@@ -11,7 +11,7 @@ import {
   Legend,
 } from "recharts";
 
-const COLORS = ["#6366F1", "#06B6D4", "#F59E0B", "#10B981", "#EF4444"];
+const COLORS = ["#6366F1", "#06B6D4", "#F59E0B", "#10B981", "#EF4444","#2a1f9a","#303030","#ffb800"];
 
 // 🔹 Truncar texto largo
 const truncateText = (text, maxLength = 12) => {
