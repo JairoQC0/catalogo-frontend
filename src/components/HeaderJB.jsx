@@ -3,6 +3,10 @@ import { motion } from "framer-motion";
 export default function HeaderJB() {
   const ICONS = [
     {
+      icon: "globe",
+      link: "https://consultoradeasesoriaempresarialjb.com/",
+    },
+    {
       icon: "facebook",
       link: "https://www.facebook.com/p/Consultora-de-Asesor%C3%ADa-Empresarial-JB-61560072496156/?locale=es_LA",
     },
